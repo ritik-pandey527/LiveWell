@@ -32,6 +32,12 @@ def fall_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/send_hospitals', methods=['POST'])
+def receive_hospitals():
+    data = request.json
+    print("Received hospital data:", data)
+    return jsonify({"message": "Hospital data received successfully"}), 200
+
 @app.route('/receive_data', methods=['POST'])
 def receive_data():
     data = request.get_json()
