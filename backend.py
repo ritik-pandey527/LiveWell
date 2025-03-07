@@ -1,8 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import requests
+from twilio.rest import Client
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Twilio Credentials (Replace with actual credentials)
+TWILIO_ACCOUNT_SID = "ACe6d35f05d4d797edc8778626dcb9b713"
+TWILIO_AUTH_TOKEN = "ae6c4be8b93a83a11e88a294d93d597a"
+TWILIO_PHONE_NUMBER = "+13512003314"
+TO_PHONE_NUMBER = "+918291189618"
+
+# React Frontend URL (Update with actual frontend URL)
+REACT_FRONTEND_URL = "https://dashboardd-er2j.vercel.app/fall_data"  # Change if hosted elsewhere
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -19,13 +30,15 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
+            # Notify React Frontend
+            try:
+                requests.get(REACT_FRONTEND_URL)
+            except requests.exceptions.RequestException as e:
+                print("Failed to notify frontend:", e)
+
             # Log the data to a file (Optional)
             with open("fall_log.txt", "a") as log_file:
                 log_file.write(f"Fall detected! X: {x_value}, Y: {y_value}, Z: {z_value}\n")
-
-            # Additional actions (e.g., send email, push notification, database logging)
-            # Example: Send Email Alert (Uncomment and configure)
-            # send_email_alert(f"Fall detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
         return jsonify({"message": "Data received successfully"}), 200
 
@@ -34,17 +47,22 @@ def fall_data():
 
 @app.route('/send_hospitals', methods=['POST'])
 def receive_hospitals():
-    data = request.json
-    print("Received hospital data:", data)
-    return jsonify({"message": "Hospital data received successfully"}), 200
+    try:
+        data = request.json
+        print("Received hospital data:", data)
 
-@app.route('/receive_data', methods=['POST'])
-def receive_data():
-    data = request.get_json()
-    print("Received Data:", data)
-    
-    # Process or store the data
-    return jsonify({"message": "Data received successfully!", "data": data})
+        # Send SMS via Twilio
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body=f"Emergency! Nearest hospital details: {data}",
+            from_=TWILIO_PHONE_NUMBER,
+            to=TO_PHONE_NUMBER
+        )
+
+        return jsonify({"message": "Hospital data received and SMS sent", "sms_sid": message.sid}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
