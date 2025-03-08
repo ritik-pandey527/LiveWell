@@ -20,33 +20,62 @@ mail = Mail(app)
 latest_data = {}
 latest_hospitals = []
 
-# Hardcoded hospital backup
 HARDCODED_HOSPITALS = [
-    {"name": "Dhada Hospital", "lat": 19.6973702, "lng": 72.766104, "link": "https://www.google.com/maps?q=19.6973702,72.766104"},
-    {"name": "Rural Health Training Centre & Hospital Palghar", "lat": 19.694106, "lng": 72.770565, "link": "https://www.google.com/maps?q=19.694106,72.770565"},
-    {"name": "Naniwadekar Hospital", "lat": 19.696111, "lng": 72.767914, "link": "https://www.google.com/maps?q=19.696111,72.767914"},
-    {"name": "Kanta Hospital", "lat": 19.697335, "lng": 72.771458, "link": "https://www.google.com/maps?q=19.697335,72.771458"},
-    {"name": "Aditya Nursing Home Maternity", "lat": 19.6947827, "lng": 72.7706389, "link": "https://www.google.com/maps?q=19.6947827,72.7706389"},
-    {"name": "Jeevan Jyot Eye Hospital", "lat": 19.7024818, "lng": 72.7795321, "link": "https://www.google.com/maps?q=19.7024818,72.7795321"}
+    {
+        "name": "Dhada Hospital",
+        "lat": 19.6973702,
+        "lng": 72.766104,
+        "link": "https://www.google.com/maps?q=19.6973702,72.766104"
+    },
+    {
+        "name": "Rural Health Training Centre & Hospital Palghar",
+        "lat": 19.694106,
+        "lng": 72.770565,
+        "link": "https://www.google.com/maps?q=19.694106,72.770565"
+    },
+    {
+        "name": "Naniwadekar Hospital",
+        "lat": 19.696111,
+        "lng": 72.767914,
+        "link": "https://www.google.com/maps?q=19.696111,72.767914"
+    },
+    {
+        "name": "Kanta Hospital",
+        "lat": 19.697335,
+        "lng": 72.771458,
+        "link": "https://www.google.com/maps?q=19.697335,72.771458"
+    },
+    {
+        "name": "Aditya Nursing Home Maternity",
+        "lat": 19.6947827,
+        "lng": 72.7706389,
+        "link": "https://www.google.com/maps?q=19.6947827,72.7706389"
+    },
+    {
+        "name": "Jeevan Jyot Eye Hospital",
+        "lat": 19.7024818,
+        "lng": 72.7795321,
+        "link": "https://www.google.com/maps?q=19.7024818,72.7795321"
+    }
 ]
 
 # Replace with actual recipient email
 RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
 
 def send_email(to_email, x_value, y_value, z_value, heart_rate, spo2, body_temp, latitude, longitude):
-    """Send fall alert email with health data, user's location, and hospital links."""
+    """Send fall alert email with health values, hospital locations, and current location link."""
     try:
         subject = "🚨 Fall Detected! Emergency Alert"
 
-        # 🔥 Create hospital list with clickable Google Maps links
+        # Create hospital list with clickable Google Maps links
         hospital_list = "".join(
             f"<p>🏥 <b>{hospital['name']}</b><br>"
             f"📍 <a href='{hospital['link']}' target='_blank'>View on Google Maps</a></p>"
             for hospital in HARDCODED_HOSPITALS
         )
 
-        # Generate Google Maps link for user's location
-        user_location_link = f"https://www.google.com/maps?q={latitude},{longitude}"
+        # Current location Google Maps link
+        location_link = f"https://www.google.com/maps?q={latitude},{longitude}"
 
         # Email message body
         message_body = f"""
@@ -54,16 +83,13 @@ def send_email(to_email, x_value, y_value, z_value, heart_rate, spo2, body_temp,
         <p><b>X:</b> {x_value}</p>
         <p><b>Y:</b> {y_value}</p>
         <p><b>Z:</b> {z_value}</p>
-
-        <h3>📊 Health Data:</h3>
-        <p>❤️ <b>Heart Rate:</b> {heart_rate} bpm</p>
-        <p>🩸 <b>SpO2:</b> {spo2}%</p>
-        <p>🌡️ <b>Body Temperature:</b> {body_temp}°C</p>
-
-        <h3>📍 User's Location:</h3>
-        <p><a href='{user_location_link}' target='_blank'>View on Google Maps</a></p>
-
-        <h3>🏥 Nearby Hospitals:</h3>
+        <h4>📊 Health Data:</h4>
+        <p><b>❤️ Heart Rate:</b> {heart_rate} bpm</p>
+        <p><b>🩸 SpO2:</b> {spo2}%</p>
+        <p><b>🌡️ Body Temperature:</b> {body_temp}°C</p>
+        <h4>📍 Current Location:</h4>
+        <p><a href='{location_link}' target='_blank'>View on Google Maps</a></p>
+        <h4>🏥 Nearby Hospitals:</h4>
         {hospital_list}
         """
 
@@ -85,31 +111,18 @@ def fall_data():
         x_value = data.get("x", 0.0)
         y_value = data.get("y", 0.0)
         z_value = data.get("z", 0.0)
-        heart_rate = data.get("heart_rate", "N/A")
-        spo2 = data.get("spo2", "N/A")
-        body_temp = data.get("body_temp", "N/A")
-
-        # User's last known location (Replace with dynamic GPS tracking if needed)
-        latitude = 19.7060402
-        longitude = 72.7819734
-
-        print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
-        print(f"❤️ Heart Rate: {heart_rate} bpm, 🩸 SpO2: {spo2}%, 🌡️ Temp: {body_temp}°C")
 
         if fall_detected:
-            # Fetch nearby hospitals (if API fails, fallback to hardcoded list)
-            hospitals = []
-            try:
-                hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")
-                if hospitals_response.status_code == 200:
-                    hospitals_data = hospitals_response.json()
-                    hospitals = hospitals_data.get("hospitals", [])
-                    if not hospitals:
-                        print("⚠️ No hospitals received from API! Using hardcoded list.")
-            except requests.RequestException:
-                print("⚠️ Hospital API request failed! Using hardcoded list.")
+            print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
-            # Send email alert
+            # Fetch health values and current location
+            heart_rate = data.get("heart_rate", 0)
+            spo2 = data.get("spo2", 0)
+            body_temp = data.get("body_temp", 0.0)
+            latitude = 19.7060402
+            longitude = 72.7819734
+
+            # Send email alert with all data
             email_status = send_email(
                 RECIPIENT_EMAIL, x_value, y_value, z_value,
                 heart_rate, spo2, body_temp, latitude, longitude
@@ -138,12 +151,25 @@ def receive_hospitals():
         hospitals = data.get("hospitals", [])
 
         if not hospitals:
+            print("⚠️ No hospitals received!")  # Debugging Log
             return jsonify({"message": "⚠️ No hospital data received"}), 400
 
         latest_hospitals = hospitals  # Store received hospitals
+        print("🏥 Updated Hospital List:", latest_hospitals)
+
         return jsonify({"message": "✅ Hospital data received successfully", "hospitals": latest_hospitals}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/receive_frontend', methods=['GET'])
+def get_receive_data():
+    """Endpoint to fetch the latest received sensor data."""
+    return jsonify({"message": "📡 Data fetched successfully!", "data": latest_data})
+
+@app.route('/fall-detect', methods=['GET'])
+def fall_detect():
+    """Test API to simulate a fall detection event."""
+    return jsonify({"fall_detected": True})  # Simulated response
 
 @app.route('/get_hospitals', methods=['GET'])
 def get_hospitals():
