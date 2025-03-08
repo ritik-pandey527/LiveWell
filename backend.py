@@ -123,7 +123,7 @@ def fall_data():
                 print(f"⚠️ Hospital API request failed: {str(e)}")
 
             # Send email alert
-            email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value, hospitals)
+            email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value)
 
             return jsonify({"message": "Fall detected!", "email_status": email_status}), 200
 
