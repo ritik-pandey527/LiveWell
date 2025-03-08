@@ -80,13 +80,6 @@ def send_email(to_email, x_value, y_value, z_value, heart_rate, spo2, body_temp,
         # Email message body
         message_body = f"""
         <h3>🚨 Fall Detected! 🚨</h3>
-        <p><b>X:</b> {x_value}</p>
-        <p><b>Y:</b> {y_value}</p>
-        <p><b>Z:</b> {z_value}</p>
-        <h4>📊 Health Data:</h4>
-        <p><b>❤️ Heart Rate:</b> {heart_rate} bpm</p>
-        <p><b>🩸 SpO2:</b> {spo2}%</p>
-        <p><b>🌡️ Body Temperature:</b> {body_temp}°C</p>
         <h4>📍 Current Location:</h4>
         <p><a href='{location_link}' target='_blank'>View on Google Maps</a></p>
         <h4>🏥 Nearby Hospitals:</h4>
