@@ -26,7 +26,13 @@ RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
 def send_email(to_email, x_value, y_value, z_value, hospitals):
     """Function to send fall alert email using Flask-Mail."""
     try:
-        subject = "🚨 Fall Detected! Emergency Alert"
+        subject = "\U0001F6A8 Fall Detected! Emergency Alert"
+        
+        # Use stored hospitals if API fetch fails
+        if not hospitals:
+            print("⚠️ No hospitals from API, using stored data...")
+            hospitals = latest_hospitals  
+
         hospital_list = "<br>".join(hospitals) if hospitals else "No hospitals available."
 
         message_body = f"""
@@ -64,8 +70,15 @@ def fall_data():
             hospitals = []
             try:
                 hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")
+                print(f"Hospital API Response Code: {hospitals_response.status_code}")
+
                 if hospitals_response.status_code == 200:
-                    hospitals = hospitals_response.json().get("hospitals", [])
+                    hospitals_data = hospitals_response.json()
+                    print(f"Raw Hospital Data: {hospitals_data}")
+
+                    hospitals = hospitals_data.get("hospitals", [])
+                    if not hospitals:
+                        print("⚠️ No hospitals received from API!")
             except requests.RequestException as e:
                 print(f"⚠️ Hospital API request failed: {str(e)}")
 
@@ -95,12 +108,13 @@ def receive_hospitals():
         hospitals = data.get("hospitals", [])
 
         if not hospitals:
+            print("⚠️ No hospitals received!")  # Debugging Log
             return jsonify({"message": "⚠️ No hospital data received"}), 400
 
         latest_hospitals = hospitals  # Store received hospitals
-        print("🏥 Received Hospitals:", latest_hospitals)
+        print("🏥 Updated Hospital List:", latest_hospitals)
 
-        return jsonify({"message": "✅ Hospital data received successfully"}), 200
+        return jsonify({"message": "✅ Hospital data received successfully", "hospitals": latest_hospitals}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
