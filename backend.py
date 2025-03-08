@@ -62,17 +62,20 @@ HARDCODED_HOSPITALS = [
 # Replace with actual recipient email
 RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
 
-def send_email(to_email, x_value, y_value, z_value):
-    """Send fall alert email with hospital locations and Google Maps links."""
+def send_email(to_email, x_value, y_value, z_value, heart_rate, spo2, body_temp, latitude, longitude):
+    """Send fall alert email with health values, hospital locations, and current location link."""
     try:
         subject = "🚨 Fall Detected! Emergency Alert"
 
-        # 🔥 Create hospital list with clickable Google Maps links
+        # Create hospital list with clickable Google Maps links
         hospital_list = "".join(
             f"<p>🏥 <b>{hospital['name']}</b><br>"
             f"📍 <a href='{hospital['link']}' target='_blank'>View on Google Maps</a></p>"
             for hospital in HARDCODED_HOSPITALS
         )
+
+        # Current location Google Maps link
+        location_link = f"https://www.google.com/maps?q={latitude},{longitude}"
 
         # Email message body
         message_body = f"""
@@ -80,7 +83,13 @@ def send_email(to_email, x_value, y_value, z_value):
         <p><b>X:</b> {x_value}</p>
         <p><b>Y:</b> {y_value}</p>
         <p><b>Z:</b> {z_value}</p>
-        <p><b>Nearby Hospitals:</b></p>
+        <h4>📊 Health Data:</h4>
+        <p><b>❤️ Heart Rate:</b> {heart_rate} bpm</p>
+        <p><b>🩸 SpO2:</b> {spo2}%</p>
+        <p><b>🌡️ Body Temperature:</b> {body_temp}°C</p>
+        <h4>📍 Current Location:</h4>
+        <p><a href='{location_link}' target='_blank'>View on Google Maps</a></p>
+        <h4>🏥 Nearby Hospitals:</h4>
         {hospital_list}
         """
 
@@ -106,24 +115,18 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
-            # Fetch nearby hospitals
-            hospitals = []
-            try:
-                hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")
-                print(f"Hospital API Response Code: {hospitals_response.status_code}")
+            # Fetch health values and current location
+            heart_rate = data.get("heart_rate", 0)
+            spo2 = data.get("spo2", 0)
+            body_temp = data.get("body_temp", 0.0)
+            latitude = 19.7060402
+            longitude = 72.7819734
 
-                if hospitals_response.status_code == 200:
-                    hospitals_data = hospitals_response.json()
-                    print(f"Raw Hospital Data: {hospitals_data}")
-
-                    hospitals = hospitals_data.get("hospitals", [])
-                    if not hospitals:
-                        print("⚠️ No hospitals received from API!")
-            except requests.RequestException as e:
-                print(f"⚠️ Hospital API request failed: {str(e)}")
-
-            # Send email alert
-            email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value)
+            # Send email alert with all data
+            email_status = send_email(
+                RECIPIENT_EMAIL, x_value, y_value, z_value,
+                heart_rate, spo2, body_temp, latitude, longitude
+            )
 
             return jsonify({"message": "Fall detected!", "email_status": email_status}), 200
 
