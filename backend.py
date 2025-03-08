@@ -33,7 +33,7 @@ def receive_data():
     print("Received Data:", latest_data)
     return jsonify({"message": "Data received successfully!"})
 
-@app.route('/receive_data', methods=['GET'])
+@app.route('/receive_frontend', methods=['GET'])
 def get_receive_data():
     return jsonify({"message": "Data fetched successfully!", "data": latest_data})
 
