@@ -1,13 +1,33 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests  
+from twilio.rest import Client
 
 app = Flask(__name__)
 CORS(app)
 
+# Twilio Credentials (Replace with actual credentials)
+TWILIO_ACCOUNT_SID = "AC041d36897cd1805421570f12941542ff"
+TWILIO_AUTH_TOKEN = "f4f9c26d06262e41ab3bffcc25b798ab"
+TWILIO_PHONE_NUMBER = "+18106768345"
+TO_PHONE_NUMBER = "+919324358212"
+
 # Store latest sensor and hospital data
 latest_data = {}
 latest_hospitals = []
+
+def send_sms(message):
+    """Function to send an SMS using Twilio."""
+    try:
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body=message,
+            from_=TWILIO_PHONE_NUMBER,
+            to=TO_PHONE_NUMBER
+        )
+        return message.sid
+    except Exception as e:
+        return str(e)
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -65,7 +85,17 @@ def receive_hospitals():
 
 @app.route('/get_hospitals', methods=['GET'])
 def get_hospitals():
-    return jsonify({"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals})
+    global latest_hospitals
+    response_data = {"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals}
+    
+    # Format the hospital data for SMS
+    hospitals_text = "\n".join([f"{i+1}. {hosp}" for i, hosp in enumerate(latest_hospitals)])
+    sms_message = f"Nearest Hospitals:\n{hospitals_text}" if latest_hospitals else "No hospitals available."
+
+    # Send SMS
+    sms_status = send_sms(sms_message)
+
+    return jsonify({"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals, "sms_status": sms_status})
 
 @app.route('/receive_frontend', methods=['GET'])
 def get_receive_data():
