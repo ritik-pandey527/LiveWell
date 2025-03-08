@@ -128,5 +128,11 @@ def fall_detect():
     """Test API to simulate a fall detection event."""
     return jsonify({"fall_detected": True})  # Simulated response
 
+@app.route('/get_hospitals', methods=['GET'])
+def get_hospitals():
+    return jsonify({"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals})
+
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
