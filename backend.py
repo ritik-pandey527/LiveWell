@@ -2,7 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
+
+# Store latest data (In-memory storage)
+latest_data = {}
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -19,18 +22,20 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
-            # Log the data to a file (Optional)
-            with open("fall_log.txt", "a") as log_file:
-                log_file.write(f"Fall detected! X: {x_value}, Y: {y_value}, Z: {z_value}\n")
-
-            # Additional actions (e.g., send email, push notification, database logging)
-            # Example: Send Email Alert (Uncomment and configure)
-            # send_email_alert(f"Fall detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
-
         return jsonify({"message": "Data received successfully"}), 200
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/receive_data', methods=['POST'])
+def receive_data():
+    global latest_data
+    latest_data = request.get_json()
+    print("Received Data:", latest_data)
+    return jsonify({"message": "Data received successfully!"})
+
+@app.route('/receive_data', methods=['GET'])
+def get_receive_data():
+    return jsonify({"message": "Data fetched successfully!", "data": latest_data})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
