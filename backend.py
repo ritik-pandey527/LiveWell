@@ -20,35 +20,75 @@ mail = Mail(app)
 latest_data = {}
 latest_hospitals = []
 
+HARDCODED_HOSPITALS = [
+    {
+        "name": "Dhada Hospital",
+        "lat": 19.6973702,
+        "lng": 72.766104,
+        "link": "https://www.google.com/maps?q=19.6973702,72.766104"
+    },
+    {
+        "name": "Rural Health Training Centre & Hospital Palghar",
+        "lat": 19.694106,
+        "lng": 72.770565,
+        "link": "https://www.google.com/maps?q=19.694106,72.770565"
+    },
+    {
+        "name": "Naniwadekar Hospital",
+        "lat": 19.696111,
+        "lng": 72.767914,
+        "link": "https://www.google.com/maps?q=19.696111,72.767914"
+    },
+    {
+        "name": "Kanta Hospital",
+        "lat": 19.697335,
+        "lng": 72.771458,
+        "link": "https://www.google.com/maps?q=19.697335,72.771458"
+    },
+    {
+        "name": "Aditya Nursing Home Maternity",
+        "lat": 19.6947827,
+        "lng": 72.7706389,
+        "link": "https://www.google.com/maps?q=19.6947827,72.7706389"
+    },
+    {
+        "name": "Jeevan Jyot Eye Hospital",
+        "lat": 19.7024818,
+        "lng": 72.7795321,
+        "link": "https://www.google.com/maps?q=19.7024818,72.7795321"
+    }
+]
+
 # Replace with actual recipient email
 RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
 
-def send_email(to_email, x_value, y_value, z_value, hospitals):
-    """Function to send fall alert email using Flask-Mail."""
+def send_email(to_email, x_value, y_value, z_value):
+    """Send fall alert email with hospital locations and Google Maps links."""
     try:
-        subject = "\U0001F6A8 Fall Detected! Emergency Alert"
-        
-        # Use stored hospitals if API fetch fails
-        if not hospitals:
-            print("⚠️ No hospitals from API, using stored data...")
-            hospitals = latest_hospitals  
+        subject = "🚨 Fall Detected! Emergency Alert"
 
-        hospital_list = "<br>".join(hospitals) if hospitals else "No hospitals available."
+        # 🔥 Create hospital list with clickable Google Maps links
+        hospital_list = "".join(
+            f"<p>🏥 <b>{hospital['name']}</b><br>"
+            f"📍 <a href='{hospital['link']}' target='_blank'>View on Google Maps</a></p>"
+            for hospital in HARDCODED_HOSPITALS
+        )
 
+        # Email message body
         message_body = f"""
         <h3>🚨 Fall Detected! 🚨</h3>
         <p><b>X:</b> {x_value}</p>
         <p><b>Y:</b> {y_value}</p>
         <p><b>Z:</b> {z_value}</p>
         <p><b>Nearby Hospitals:</b></p>
-        <p>{hospital_list}</p>
+        {hospital_list}
         """
 
         msg = Message(subject=subject, recipients=[to_email], html=message_body)
         mail.send(msg)
-        return "Email sent successfully!"
+        return "✅ Email sent successfully!"
     except Exception as e:
-        return f"Email send error: {str(e)}"
+        return f"❌ Email send error: {str(e)}"
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -131,8 +171,6 @@ def fall_detect():
 @app.route('/get_hospitals', methods=['GET'])
 def get_hospitals():
     return jsonify({"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals})
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
