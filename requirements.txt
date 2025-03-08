@@ -1,4 +1,4 @@
 Flask
-flask-cors
+Flask-Mail
+Flask-CORS
 requests
-twilio
