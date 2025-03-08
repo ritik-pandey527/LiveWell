@@ -6,56 +6,54 @@ from flask_mail import Mail, Message
 app = Flask(__name__)
 CORS(app)
 
-# Flask-Mail Configuration (Replace with your Gmail details)
+# Flask-Mail Configuration
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USE_SSL"] = False
 app.config["MAIL_USERNAME"] = "pandeyritik527@gmail.com"  # Replace with your email
-app.config["MAIL_PASSWORD"] = "afvo ycqa cyox vlts"  # Use App Password, not Gmail password
+app.config["MAIL_PASSWORD"] = "afvo ycqa cyox vlts"  # Use App Password
 app.config["MAIL_DEFAULT_SENDER"] = "pandeyritik527@gmail.com"
 
 mail = Mail(app)
 
+# Store latest data
 latest_data = {}
-latest_hospitals = []  # Store last successful hospital fetch
+latest_hospitals = []
 
-RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this to the recipient email
+RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
 
 def fetch_hospitals():
-    """Fetch nearby hospitals from API, with error handling and fallback."""
+    """Fetch hospitals from API with fallback."""
     global latest_hospitals
     hospitals = []
+
     try:
         print("🔍 Fetching hospitals from API...")
-        hospitals_response = requests.get("https://livewell-lxau.onrender.com/get_hospitals", timeout=5)
-        hospitals_response.raise_for_status()  # Raises an error for HTTP errors
+        response = requests.get("https://livewell-lxau.onrender.com/get_hospitals", timeout=5)
+        print(f"API Response Code: {response.status_code}")
 
-        hospitals_data = hospitals_response.json()
-        print(f"🏥 Hospital API Raw Response: {hospitals_data}")
+        if response.status_code == 200:
+            hospitals_data = response.json()
+            print(f"🏥 Raw Hospital Data: {hospitals_data}")
 
-        hospitals = hospitals_data.get("hospitals", [])
-        if hospitals:
-            latest_hospitals = hospitals  # Update stored hospitals
-        else:
-            print("⚠️ No hospitals received from API, using stored data...")
+            hospitals = hospitals_data.get("hospitals", [])
+            if hospitals:
+                latest_hospitals = hospitals  # ✅ Update stored hospitals
+            else:
+                print("⚠️ API returned empty hospital list, using stored data...")
 
     except requests.RequestException as e:
-        print(f"⚠️ Error fetching hospitals: {e}")
-        hospitals = latest_hospitals  # Fallback to last successful data
+        print(f"⚠️ API Request Failed: {e}")
+        hospitals = latest_hospitals  # 🔄 Use last known hospitals
 
     return hospitals
 
 def send_email(to_email, x_value, y_value, z_value, hospitals):
-    """Send fall alert email using Flask-Mail."""
+    """Send fall alert email."""
     try:
         subject = "🚨 Fall Detected! Emergency Alert"
-        
-        if not hospitals:
-            hospitals = latest_hospitals  # Use stored hospitals if none from API
-            print("⚠️ Using stored hospital data for email...")
-
-        hospital_list = "<br>".join(hospitals) if hospitals else "No hospitals available."
+        hospitals_list = "<br>".join(hospitals) if hospitals else "No hospitals available."
 
         message_body = f"""
         <h3>🚨 Fall Detected! 🚨</h3>
@@ -63,22 +61,22 @@ def send_email(to_email, x_value, y_value, z_value, hospitals):
         <p><b>Y:</b> {y_value}</p>
         <p><b>Z:</b> {z_value}</p>
         <p><b>Nearby Hospitals:</b></p>
-        <p>{hospital_list}</p>
+        <p>{hospitals_list}</p>
         """
 
         msg = Message(subject=subject, recipients=[to_email], html=message_body)
         mail.send(msg)
         return "✅ Email sent successfully!"
     except Exception as e:
-        return f"⚠️ Email send error: {str(e)}"
+        return f"❌ Email send error: {str(e)}"
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
-    """Receive fall detection data and send an alert email."""
+    """Receive fall detection data & send alert email."""
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"error": "❌ No data received"}), 400
+            return jsonify({"error": "No data received"}), 400
 
         fall_detected = data.get("fall_detected", False)
         x_value = data.get("x", 0.0)
@@ -88,13 +86,14 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
-            hospitals = fetch_hospitals()  # Get hospitals
+            hospitals = fetch_hospitals()  # Fetch hospitals
+            print(f"🏥 Hospitals to be sent in email: {hospitals}")  # Debugging log
 
             email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value, hospitals)
 
             return jsonify({"message": "Fall detected!", "email_status": email_status}), 200
 
-        return jsonify({"message": "✅ Data received successfully"}), 200
+        return jsonify({"message": "Data received successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -108,7 +107,7 @@ def receive_data():
 
 @app.route('/send_hospitals', methods=['POST'])
 def receive_hospitals():
-    """Receive and store hospital details manually."""
+    """Receive and store hospital details."""
     global latest_hospitals
     try:
         data = request.json
@@ -118,7 +117,7 @@ def receive_hospitals():
             print("⚠️ No hospitals received!")
             return jsonify({"message": "⚠️ No hospital data received"}), 400
 
-        latest_hospitals = hospitals  # Store received hospitals
+        latest_hospitals = hospitals
         print("🏥 Updated Hospital List:", latest_hospitals)
 
         return jsonify({"message": "✅ Hospital data received successfully", "hospitals": latest_hospitals}), 200
@@ -137,8 +136,8 @@ def fall_detect():
 
 @app.route('/get_hospitals', methods=['GET'])
 def get_hospitals():
-    """Return stored hospital data."""
-    return jsonify({"message": "🏥 Hospitals fetched successfully!", "hospitals": latest_hospitals})
+    """Fetch stored hospitals."""
+    return jsonify({"message": "Hospitals fetched successfully!", "hospitals": latest_hospitals})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
