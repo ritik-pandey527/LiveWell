@@ -15,7 +15,7 @@ EMAILJS_USER_ID = "uoL2gXhUchCwkqKVE"  # Replace with your EmailJS User ID
 EMAILJS_API_URL = "https://api.emailjs.com/api/v1.0/email/send"
 
 # 🔹 Recipient Email (Replace with actual recipient)
-RECIPIENT_EMAIL = "pandeyritik527@gmail.com"
+RECIPIENT_EMAIL = "vaityjatin13@gmail.com"
 
 def send_email(to_email, x_value, y_value, z_value, hospitals):
     """Function to send a fall alert email via EmailJS."""
