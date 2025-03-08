@@ -5,6 +5,9 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+latest_data = {}
+latest_hospitals = []
+
 # EmailJS Configuration (Replace with your actual details)
 EMAILJS_SERVICE_ID = "service_hbhv26j"
 EMAILJS_TEMPLATE_ID = "template_i10uilk"
@@ -71,6 +74,38 @@ def fall_data():
         return jsonify({"message": "Data received successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/receive_data', methods=['POST'])
+def receive_data():
+    global latest_data
+    latest_data = request.get_json()
+    print("Received Data:", latest_data)
+    return jsonify({"message": "Data received successfully!"})
+
+@app.route('/send_hospitals', methods=['POST'])
+def receive_hospitals():
+    global latest_hospitals
+    try:
+        data = request.json
+        hospitals = data.get("hospitals", [])
+
+        if not hospitals:
+            return jsonify({"message": "No hospital data received"}), 400
+
+        latest_hospitals = hospitals  # Store received hospitals
+        print("Received Hospitals:", latest_hospitals)
+
+        return jsonify({"message": "Hospital data received successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/receive_frontend', methods=['GET'])
+def get_receive_data():
+    return jsonify({"message": "Data fetched successfully!", "data": latest_data})
+
+@app.route('/fall-detect', methods=['GET'])
+def fall_detect():
+    return jsonify({"fall_detected": True})  # Simulated response
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
