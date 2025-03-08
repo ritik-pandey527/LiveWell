@@ -8,14 +8,14 @@ CORS(app)
 latest_data = {}
 latest_hospitals = []
 
-# EmailJS Configuration (Replace with your actual details)
-EMAILJS_SERVICE_ID = "service_hbhv26j"
-EMAILJS_TEMPLATE_ID = "template_i10uilk"
-EMAILJS_USER_ID = "uoL2gXhUchCwkqKVE"
+# 🔹 EmailJS Configuration (Replace with actual details)
+EMAILJS_SERVICE_ID = "service_hbhv26j"  # Replace with your EmailJS Service ID
+EMAILJS_TEMPLATE_ID = "template_i10uilk"  # Replace with your EmailJS Template ID
+EMAILJS_USER_ID = "uoL2gXhUchCwkqKVE"  # Replace with your EmailJS User ID
 EMAILJS_API_URL = "https://api.emailjs.com/api/v1.0/email/send"
 
-# Replace with the actual recipient email
-RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
+# 🔹 Recipient Email (Replace with actual recipient)
+RECIPIENT_EMAIL = "pandeyritik527@gmail.com"
 
 def send_email(to_email, x_value, y_value, z_value, hospitals):
     """Function to send a fall alert email via EmailJS."""
@@ -24,7 +24,9 @@ def send_email(to_email, x_value, y_value, z_value, hospitals):
         "template_id": EMAILJS_TEMPLATE_ID,
         "user_id": EMAILJS_USER_ID,
         "template_params": {
-            "to_email": to_email,  # Recipient email
+            "to_email": to_email,
+            "to_name": "Ritik Pandey",  # Replace with recipient name
+            "from_name": "LiveWell Alert System",
             "x_value": x_value,
             "y_value": y_value,
             "z_value": z_value,
@@ -34,12 +36,14 @@ def send_email(to_email, x_value, y_value, z_value, hospitals):
 
     try:
         response = requests.post(EMAILJS_API_URL, json=email_data)
+        print("📩 EmailJS Response:", response.text)  # Debugging line
+
         if response.status_code == 200:
-            return "Email sent successfully!"
+            return "✅ Email sent successfully!"
         else:
-            return f"Failed to send email: {response.text}"
+            return f"❌ Failed to send email: {response.text}"
     except Exception as e:
-        return f"Email send error: {str(e)}"
+        return f"⚠️ Email send error: {str(e)}"
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -47,7 +51,7 @@ def fall_data():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"error": "No data received"}), 400
+            return jsonify({"error": "❌ No data received"}), 400
 
         fall_detected = data.get("fall_detected", False)
         x_value = data.get("x", 0.0)
@@ -57,7 +61,7 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
-            # Fetch nearby hospitals
+            # 🔹 Fetch nearby hospitals
             hospitals = []
             try:
                 hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")
@@ -66,45 +70,49 @@ def fall_data():
             except requests.RequestException as e:
                 print(f"⚠️ Hospital API request failed: {str(e)}")
 
-            # Send email alert
+            # 🔹 Send email alert
             email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value, hospitals)
 
-            return jsonify({"message": "Fall detected!", "email_status": email_status}), 200
+            return jsonify({"message": "🚀 Fall detected!", "email_status": email_status}), 200
 
-        return jsonify({"message": "Data received successfully"}), 200
+        return jsonify({"message": "✅ Data received successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/receive_data', methods=['POST'])
 def receive_data():
+    """Endpoint to receive and store sensor data."""
     global latest_data
     latest_data = request.get_json()
-    print("Received Data:", latest_data)
-    return jsonify({"message": "Data received successfully!"})
+    print("📡 Received Data:", latest_data)
+    return jsonify({"message": "✅ Data received successfully!"})
 
 @app.route('/send_hospitals', methods=['POST'])
 def receive_hospitals():
+    """Endpoint to receive and store hospital details."""
     global latest_hospitals
     try:
         data = request.json
         hospitals = data.get("hospitals", [])
 
         if not hospitals:
-            return jsonify({"message": "No hospital data received"}), 400
+            return jsonify({"message": "⚠️ No hospital data received"}), 400
 
         latest_hospitals = hospitals  # Store received hospitals
-        print("Received Hospitals:", latest_hospitals)
+        print("🏥 Received Hospitals:", latest_hospitals)
 
-        return jsonify({"message": "Hospital data received successfully"}), 200
+        return jsonify({"message": "✅ Hospital data received successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/receive_frontend', methods=['GET'])
 def get_receive_data():
-    return jsonify({"message": "Data fetched successfully!", "data": latest_data})
+    """Endpoint to fetch the latest received sensor data."""
+    return jsonify({"message": "📡 Data fetched successfully!", "data": latest_data})
 
 @app.route('/fall-detect', methods=['GET'])
 def fall_detect():
+    """Test API to simulate a fall detection event."""
     return jsonify({"fall_detected": True})  # Simulated response
 
 if __name__ == '__main__':
