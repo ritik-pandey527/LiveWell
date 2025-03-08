@@ -48,6 +48,16 @@ def fall_data():
             sms_message = f"🚨 ALERT: Fall Detected!\nCoordinates:\nX: {x_value}\nY: {y_value}\nZ: {z_value}"
             sms_status = send_sms(sms_message)
 
+            # Fetch nearby hospitals
+            hospitals_response = requests.get("http://localhost:5000/get_hospitals")  # Assuming the same server
+            if hospitals_response.status_code == 200:
+                hospitals_data = hospitals_response.json().get("hospitals", [])
+                hospitals_text = "\n".join([f"{i+1}. {hosp}" for i, hosp in enumerate(hospitals_data)])
+                hospitals_message = f"Nearest Hospitals:\n{hospitals_text}" if hospitals_data else "No hospitals available."
+                send_sms(hospitals_message)  # Send hospital list via SMS
+            else:
+                send_sms("⚠️ Unable to fetch nearby hospitals.")
+
             try:
                 fall_response = requests.get("https://livewell-lxau.onrender.com/fall-detect")
                 if fall_response.status_code == 200:
