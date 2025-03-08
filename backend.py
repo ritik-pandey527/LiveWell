@@ -78,5 +78,41 @@ def fall_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/receive_data', methods=['POST'])
+def receive_data():
+    """Endpoint to receive and store sensor data."""
+    global latest_data
+    latest_data = request.get_json()
+    print("📡 Received Data:", latest_data)
+    return jsonify({"message": "✅ Data received successfully!"})
+
+@app.route('/send_hospitals', methods=['POST'])
+def receive_hospitals():
+    """Endpoint to receive and store hospital details."""
+    global latest_hospitals
+    try:
+        data = request.json
+        hospitals = data.get("hospitals", [])
+
+        if not hospitals:
+            return jsonify({"message": "⚠️ No hospital data received"}), 400
+
+        latest_hospitals = hospitals  # Store received hospitals
+        print("🏥 Received Hospitals:", latest_hospitals)
+
+        return jsonify({"message": "✅ Hospital data received successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/receive_frontend', methods=['GET'])
+def get_receive_data():
+    """Endpoint to fetch the latest received sensor data."""
+    return jsonify({"message": "📡 Data fetched successfully!", "data": latest_data})
+
+@app.route('/fall-detect', methods=['GET'])
+def fall_detect():
+    """Test API to simulate a fall detection event."""
+    return jsonify({"fall_detected": True})  # Simulated response
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
