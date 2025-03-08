@@ -7,9 +7,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Twilio Credentials (Replace with actual credentials)
-TWILIO_ACCOUNT_SID = "AC041d36897cd1805421570f12941542ff"
-TWILIO_AUTH_TOKEN = "f4f9c26d06262e41ab3bffcc25b798ab"
-TWILIO_PHONE_NUMBER = "+18106768345"
+TWILIO_ACCOUNT_SID = "ACce9b83f3d4763e23549f0d3f7144998b"
+TWILIO_AUTH_TOKEN = "a13e0fe781519fff21d049a4deaf8481"
+TWILIO_PHONE_NUMBER = "+18566845686"
 TO_PHONE_NUMBER = "+919324358212"
 
 # Store latest sensor and hospital data
@@ -44,16 +44,20 @@ def fall_data():
         if fall_detected:
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
+            # Send an SMS alert via Twilio
+            sms_message = f"🚨 ALERT: Fall Detected!\nCoordinates:\nX: {x_value}\nY: {y_value}\nZ: {z_value}"
+            sms_status = send_sms(sms_message)
+
             try:
                 fall_response = requests.get("https://livewell-lxau.onrender.com/fall-detect")
                 if fall_response.status_code == 200:
                     fall_status = fall_response.json()
                     print("Fall Detection API Response:", fall_status)
-                    return jsonify({"message": "Data received and fall detected!", "fall_status": fall_status}), 200
+                    return jsonify({"message": "Data received and fall detected!", "fall_status": fall_status, "sms_status": sms_status}), 200
                 else:
-                    return jsonify({"message": "Data received but fall detection API failed"}), 500
+                    return jsonify({"message": "Data received but fall detection API failed", "sms_status": sms_status}), 500
             except requests.RequestException as e:
-                return jsonify({"message": "Data received but fall detection API request failed", "error": str(e)}), 500
+                return jsonify({"message": "Data received but fall detection API request failed", "error": str(e), "sms_status": sms_status}), 500
 
         return jsonify({"message": "Data received successfully"}), 200
     except Exception as e:
