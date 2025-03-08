@@ -11,17 +11,21 @@ EMAILJS_TEMPLATE_ID = "template_i10uilk"
 EMAILJS_USER_ID = "uoL2gXhUchCwkqKVE"
 EMAILJS_API_URL = "https://api.emailjs.com/api/v1.0/email/send"
 
-def send_email(x_value, y_value, z_value, hospitals):
+# Replace with the actual recipient email
+RECIPIENT_EMAIL = "pandeyritik527@gmail.com"  # Change this
+
+def send_email(to_email, x_value, y_value, z_value, hospitals):
     """Function to send a fall alert email via EmailJS."""
     email_data = {
         "service_id": EMAILJS_SERVICE_ID,
         "template_id": EMAILJS_TEMPLATE_ID,
         "user_id": EMAILJS_USER_ID,
         "template_params": {
+            "to_email": to_email,  # Recipient email
             "x_value": x_value,
             "y_value": y_value,
             "z_value": z_value,
-            "hospital_list": "\n".join(hospitals) if hospitals else "No hospitals available.",
+            "hospital_list": "<br>".join(hospitals) if hospitals else "No hospitals available."
         }
     }
 
@@ -32,7 +36,7 @@ def send_email(x_value, y_value, z_value, hospitals):
         else:
             return f"Failed to send email: {response.text}"
     except Exception as e:
-        return str(e)
+        return f"Email send error: {str(e)}"
 
 @app.route('/fall_data', methods=['POST'])
 def fall_data():
@@ -51,11 +55,16 @@ def fall_data():
             print(f"🚨 Fall Detected! X: {x_value}, Y: {y_value}, Z: {z_value}")
 
             # Fetch nearby hospitals
-            hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")  # Assuming the same server
-            hospitals = hospitals_response.json().get("hospitals", []) if hospitals_response.status_code == 200 else []
+            hospitals = []
+            try:
+                hospitals_response = requests.get("https://dashboardd-er2j.vercel.app/get_hospitals")
+                if hospitals_response.status_code == 200:
+                    hospitals = hospitals_response.json().get("hospitals", [])
+            except requests.RequestException as e:
+                print(f"⚠️ Hospital API request failed: {str(e)}")
 
             # Send email alert
-            email_status = send_email(x_value, y_value, z_value, hospitals)
+            email_status = send_email(RECIPIENT_EMAIL, x_value, y_value, z_value, hospitals)
 
             return jsonify({"message": "Fall detected!", "email_status": email_status}), 200
 
