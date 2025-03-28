@@ -1,13 +1,22 @@
+import os
 from flask import Flask, request, jsonify
 from twilio.rest import Client
 
 app = Flask(__name__)
+
+# Load sensitive Twilio credentials from environment variables for security
+TWILIO_ACCOUNT_SID = os.getenv("AC5a0980058d67d500c0b3a0787012c996")  # Ensure these are set in your environment
+TWILIO_AUTH_TOKEN = os.getenv("6309554332915ab3dd3afeba95ad0e7c")  # Ensure these are set in your environment
+TWILIO_PHONE_NUMBER = os.getenv("+18566444159")  # Your Twilio phone number
+RECIPIENT_PHONE_NUMBER = os.getenv("+919372856669")  # The recipient's phone number
 
 # Twilio Configuration (Using the credentials you provided)
 TWILIO_ACCOUNT_SID = "AC5a0980058d67d500c0b3a0787012c996"  # Replace with your Twilio Account SID
 TWILIO_AUTH_TOKEN = "6309554332915ab3dd3afeba95ad0e7c"    # Replace with your Twilio Auth Token
 TWILIO_PHONE_NUMBER = "+18566444159"     # Replace with your Twilio phone number
 RECIPIENT_PHONE_NUMBER = "+919372856669" # Replace with the recipient's phone number
+
+
 
 # Twilio Client Setup
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
@@ -37,20 +46,22 @@ def fall_data():
     """Endpoint to receive fall detection data and send an SMS alert."""
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data received"}), 400
 
-        fall_detected = data.get("fall_detected", False)
+        # Ensure the incoming data contains 'fall_detected' field
+        if not data or "fall_detected" not in data:
+            return jsonify({"error": "Invalid data format. 'fall_detected' key is required."}), 400
+
+        fall_detected = data["fall_detected"]
 
         if fall_detected:
             print("🚨 Fall Detected!")
-
             # Send SMS alert (no location needed)
             sms_status = send_sms(RECIPIENT_PHONE_NUMBER)
 
             return jsonify({"message": "Fall detected!", "sms_status": sms_status}), 200
 
         return jsonify({"message": "No fall detected."}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
