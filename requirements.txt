@@ -2,3 +2,4 @@ Flask
 Flask-Mail
 Flask-CORS
 requests
+twilio
