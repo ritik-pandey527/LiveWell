@@ -10,14 +10,6 @@ TWILIO_AUTH_TOKEN = os.getenv("6309554332915ab3dd3afeba95ad0e7c")  # Ensure thes
 TWILIO_PHONE_NUMBER = os.getenv("+18566444159")  # Your Twilio phone number
 RECIPIENT_PHONE_NUMBER = os.getenv("+919372856669")  # The recipient's phone number
 
-# Twilio Configuration (Using the credentials you provided)
-TWILIO_ACCOUNT_SID = "AC5a0980058d67d500c0b3a0787012c996"  # Replace with your Twilio Account SID
-TWILIO_AUTH_TOKEN = "6309554332915ab3dd3afeba95ad0e7c"    # Replace with your Twilio Auth Token
-TWILIO_PHONE_NUMBER = "+18566444159"     # Replace with your Twilio phone number
-RECIPIENT_PHONE_NUMBER = "+919372856669" # Replace with the recipient's phone number
-
-
-
 # Twilio Client Setup
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
